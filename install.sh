@@ -78,10 +78,40 @@ download() {
   fi
 }
 
+fetch() {
+  # fetch <url> -> stdout
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$1"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -qO - "$1"
+  else
+    error "need curl or wget to download files"
+  fi
+}
+
+# Resolve VERSION="latest" to the most recent release tag. Unlike the
+# /releases/latest endpoint, the /releases list includes pre-releases, so this
+# works for early 0.0.x pre-release builds too. GitHub returns releases newest
+# first, so the first tag_name is what we want.
+resolve_version() {
+  [ "$VERSION" = "latest" ] || return 0
+
+  api="https://api.github.com/repos/${REPO}/releases?per_page=1"
+  tag="$(fetch "$api" 2>/dev/null \
+    | grep -m1 '"tag_name"' \
+    | sed -E 's/.*"tag_name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
+
+  if [ -n "${tag:-}" ]; then
+    VERSION="$tag"
+  fi
+  return 0
+}
+
 asset_url() {
   # asset_url <target>
   filename="${BIN_NAME}-${1}.tar.gz"
   if [ "$VERSION" = "latest" ]; then
+    # Fallback if the API could not be reached; only finds stable releases.
     echo "https://github.com/${REPO}/releases/latest/download/${filename}"
   else
     echo "https://github.com/${REPO}/releases/download/${VERSION}/${filename}"
@@ -188,7 +218,7 @@ main() {
 
   if [ "${EPISTEM_FROM_SOURCE:-0}" = "1" ]; then
     install_from_source
-  elif install_from_release "$target"; then
+  elif resolve_version && install_from_release "$target"; then
     :
   else
     warn "no prebuilt binary found for ${target}; falling back to source build"

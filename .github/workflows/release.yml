@@ -9,8 +9,24 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  # Create the release once, up front. Doing this in a dedicated job avoids the
+  # race where every matrix job tries to create/find the release at the same
+  # time (which caused "release not found" failures). Tags containing a hyphen
+  # (e.g. v0.0.1-rc1) are automatically marked as pre-releases.
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create release
+        uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
     name: ${{ matrix.target }}
+    needs: create-release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -36,7 +52,7 @@ jobs:
 
       # Builds the binary, packages it as `epistem-<target>.tar.gz` with the raw
       # `epistem` executable at the archive root, and attaches it to the release
-      # for this tag. This is exactly what install.sh downloads.
+      # created above. This is exactly what install.sh downloads.
       - name: Build and upload
         uses: taiki-e/upload-rust-binary-action@v1
         with:
