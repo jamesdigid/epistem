@@ -22,6 +22,10 @@ jobs:
       - name: Create release
         uses: taiki-e/create-gh-release-action@v1
         with:
+          # Force pre-release for now; the installer resolves the tag via the
+          # API so it finds pre-releases just like stable releases. Drop this
+          # (or use a plain tag) once you want a stable release.
+          prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
   upload-assets:
