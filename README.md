@@ -28,6 +28,23 @@ Then, from inside your agent directory:
 epistem learn browser-generic
 ```
 
+To scaffold a new capability directory first:
+
+```bash
+epistem init
+```
+
+You can also point it at a directory explicitly:
+
+```bash
+epistem init <directory>
+```
+
+If you omit the directory, Epistem initializes the parent directory of the
+current working directory. The scaffold creates `epistem.json`, `README.md`,
+and a starter capability package under `capabilities/<name>/` with its own
+`README.md` and `AGENT.md` if they do not already exist.
+
 Useful environment variables:
 
 - `EPISTEM_INSTALL_DIR` — install location (default `~/.epistem/bin`)
