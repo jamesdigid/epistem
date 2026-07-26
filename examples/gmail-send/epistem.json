@@ -1,0 +1,22 @@
+{
+  "name": "@epistem/gmail-send",
+  "version": "1.0.0",
+  "description": "Send email using Gmail",
+  "contracts": [
+    {
+      "id": "send-email",
+      "version": "^1.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "contract": "authenticate-google"
+    }
+  ],
+  "keywords": ["gmail", "email", "notification"],
+  "artifacts": {
+    "guide": "README.md",
+    "examples": "examples/",
+    "tests": "tests/"
+  }
+}
