@@ -11,6 +11,29 @@ The first milestone is infrastructure only: manifest parsing, validation, filesy
 loading, capability resolution, and clean interfaces for the catalog, registry, and
 search layers.
 
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jamesdigid/epistem/main/install.sh | sh
+```
+
+The installer downloads a prebuilt binary for your platform (macOS and Linux,
+`x86_64` and `aarch64`) into `~/.epistem/bin`. If no prebuilt binary is available
+for your platform it falls back to building from source with `cargo`, which
+requires a [Rust toolchain](https://rustup.rs).
+
+Then, from inside your agent directory:
+
+```bash
+epistem learn browser-generic
+```
+
+Useful environment variables:
+
+- `EPISTEM_INSTALL_DIR` — install location (default `~/.epistem/bin`)
+- `EPISTEM_VERSION` — pin a specific release tag (default `latest`)
+- `EPISTEM_FROM_SOURCE=1` — force a source build with `cargo`
+
 ## What Exists Today
 
 - `epistem.json` manifest models with `serde`

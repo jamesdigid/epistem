@@ -25,8 +25,14 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 enum Commands {
     Init,
-    Validate { path: PathBuf },
+    Validate {
+        path: PathBuf,
+    },
     Install,
+    /// Learn a capability into the current agent directory.
+    Learn {
+        capability: String,
+    },
     Graph,
     Search,
 }
@@ -42,6 +48,9 @@ pub fn run() -> crate::error::Result<()> {
         }
         Commands::Install => {
             println!("install is not implemented yet");
+        }
+        Commands::Learn { capability } => {
+            println!("learn is not implemented yet (requested capability: {capability})");
         }
         Commands::Graph => {
             println!("graph is not implemented yet");
