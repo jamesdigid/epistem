@@ -80,20 +80,16 @@ fn init(target_dir: Option<PathBuf>) -> crate::error::Result<()> {
             .unwrap_or_else(|| cwd.clone()),
     };
 
-    let capability_name = target_dir
+    let capabilities_dir = target_dir.join("capabilities");
+    fs::create_dir_all(&capabilities_dir)?;
+
+    let workspace_name = target_dir
         .file_name()
         .and_then(|value| value.to_str())
-        .unwrap_or("epistem-capability");
-
-    let capabilities_dir = target_dir.join("capabilities");
-    let capability_dir = capabilities_dir.join(capability_name);
-
-    fs::create_dir_all(&capability_dir)?;
+        .unwrap_or("epistem-workspace");
 
     let manifest_path = target_dir.join(MANIFEST_FILENAME);
-    let readme_path = target_dir.join("README.md");
-    let capability_readme_path = capability_dir.join("README.md");
-    let agent_path = capability_dir.join("AGENT.md");
+    let workspace_doc_path = target_dir.join("EPISTEM.md");
 
     let manifest = format!(
         concat!(
@@ -103,44 +99,23 @@ fn init(target_dir: Option<PathBuf>) -> crate::error::Result<()> {
             "  \"description\": \"Capability scaffold initialized by epistem init\"\n",
             "}}\n"
         ),
-        capability_name
+        workspace_name
     );
 
-    let readme = format!(
+    let workspace_doc = format!(
         concat!(
             "# Epistem Workspace\n\n",
             "This directory was initialized by `epistem init`.\n\n",
             "Installed capabilities live under `capabilities/`.\n\n",
             "## Next Steps\n\n",
             "- Edit `{}` to describe the workspace-level capability.\n",
-            "- Add installed capabilities under `capabilities/<name>/`.\n"
+            "- Add installed capabilities under `capabilities/`.\n"
         ),
         MANIFEST_FILENAME
     );
 
-    let capability_readme = format!(
-        concat!(
-            "# {}\n\n",
-            "This capability package was initialized by `epistem init`.\n\n",
-            "## Contents\n\n",
-            "- `AGENT.md` holds agent-facing instructions.\n",
-            "- This `README.md` explains the capability at a human level.\n"
-        ),
-        capability_name
-    );
-
-    let agent = concat!(
-        "# Agent Instructions\n\n",
-        "This file is the starting point for capability-specific instructions.\n\n",
-        "- Keep instructions concise and agent-friendly.\n",
-        "- Reference this capability's `README.md` and the workspace `epistem.json`.\n",
-        "- Add any operational notes, constraints, or examples here.\n"
-    );
-
     write_if_missing(&manifest_path, &manifest)?;
-    write_if_missing(&readme_path, &readme)?;
-    write_if_missing(&capability_readme_path, &capability_readme)?;
-    write_if_missing(&agent_path, agent)?;
+    write_if_missing(&workspace_doc_path, &workspace_doc)?;
 
     println!(
         "initialized capability scaffold in {}",
@@ -358,31 +333,23 @@ mod tests {
 
     fn assert_scaffold(target_dir: &Path) {
         let manifest_path = target_dir.join(MANIFEST_FILENAME);
-        let readme_path = target_dir.join("README.md");
-        let capability_name = target_dir
-            .file_name()
-            .and_then(|value| value.to_str())
-            .expect("target dir name");
-        let capability_dir = target_dir.join("capabilities").join(capability_name);
-        let capability_readme_path = capability_dir.join("README.md");
-        let agent_path = capability_dir.join("AGENT.md");
+        let workspace_doc_path = target_dir.join("EPISTEM.md");
+        let capability_dir = target_dir.join("capabilities");
 
         assert!(manifest_path.exists());
-        assert!(readme_path.exists());
-        assert!(capability_readme_path.exists());
-        assert!(agent_path.exists());
+        assert!(workspace_doc_path.exists());
+        assert!(capability_dir.exists());
+        assert!(
+            fs::read_dir(&capability_dir)
+                .expect("capabilities dir")
+                .next()
+                .is_none()
+        );
 
         let manifest = fs::read_to_string(manifest_path).expect("manifest");
         assert!(manifest.contains("\"version\": \"0.1.0\""));
 
-        let readme = fs::read_to_string(readme_path).expect("readme");
-        assert!(readme.contains("Installed capabilities live under `capabilities/`"));
-
-        let capability_readme =
-            fs::read_to_string(capability_readme_path).expect("capability readme");
-        assert!(capability_readme.contains("This capability package was initialized"));
-
-        let agent = fs::read_to_string(agent_path).expect("agent");
-        assert!(agent.contains("Agent Instructions"));
+        let workspace_doc = fs::read_to_string(workspace_doc_path).expect("workspace doc");
+        assert!(workspace_doc.contains("Installed capabilities live under `capabilities/`"));
     }
 }
