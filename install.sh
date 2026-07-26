@@ -203,7 +203,7 @@ add_to_path_hint() {
   printf '\n'
   warn "$INSTALL_DIR is not on your PATH."
   printf '%s  Add it by running:%s\n\n' "$DIM" "$RESET"
-  printf '    echo %s%s%s >> %s\n' "$BOLD" "$export_line" "$RESET" "$profile"
+  printf "    echo %s'%s'%s >> %s\n" "$BOLD" "$export_line" "$RESET" "$profile"
   printf '    %s\n\n' "$export_line"
 }
 

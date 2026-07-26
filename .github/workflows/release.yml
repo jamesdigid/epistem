@@ -19,13 +19,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # A hyphenated tag (e.g. v0.0.1-rc.1) is automatically published as a
+      # pre-release; a plain tag (e.g. v0.0.1) becomes a stable release. The
+      # installer resolves the tag via the API, so it finds either one.
       - name: Create release
         uses: taiki-e/create-gh-release-action@v1
         with:
-          # Force pre-release for now; the installer resolves the tag via the
-          # API so it finds pre-releases just like stable releases. Drop this
-          # (or use a plain tag) once you want a stable release.
-          prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
   upload-assets:
