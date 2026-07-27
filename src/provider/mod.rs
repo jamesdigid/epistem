@@ -65,9 +65,9 @@ impl FromStr for ProviderRef {
     type Err = EpistemError;
 
     fn from_str(value: &str) -> Result<Self> {
-        let (scheme, remainder) = value
-            .split_once(':')
-            .ok_or_else(|| EpistemError::Registry(format!("invalid provider reference: {value}")))?;
+        let (scheme, remainder) = value.split_once(':').ok_or_else(|| {
+            EpistemError::Registry(format!("invalid provider reference: {value}"))
+        })?;
 
         let (location, reference) = match remainder.rsplit_once('@') {
             Some((location, reference)) if scheme == "github" => {
@@ -124,9 +124,9 @@ pub struct GitProviderFetcher;
 
 impl ProviderFetcher for GitProviderFetcher {
     fn fetch(&self, provider: &ProviderRef, destination: &Path) -> Result<PathBuf> {
-        let url = provider
-            .git_url()
-            .ok_or_else(|| EpistemError::Registry("provider is not a github reference".to_string()))?;
+        let url = provider.git_url().ok_or_else(|| {
+            EpistemError::Registry("provider is not a github reference".to_string())
+        })?;
         let destination = destination.join(provider.slug());
         if destination.exists() {
             fs::remove_dir_all(&destination)?;

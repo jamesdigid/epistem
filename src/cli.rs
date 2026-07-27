@@ -112,16 +112,14 @@ fn init(target_dir: Option<PathBuf>) -> crate::error::Result<()> {
         capabilities: Vec::new(),
     };
 
-    let workspace_doc = format!(
-        concat!(
-            "# Epistem Workspace\n\n",
-            "This directory was initialized by `epistem init`.\n\n",
-            "Installed capabilities live under `capabilities/`.\n\n",
-            "## Next Steps\n\n",
-            "- Add installed capabilities under `capabilities/`.\n",
-            "- Use `epistem learn <capability>` to acquire a capability.\n"
-        )
-    );
+    let workspace_doc = format!(concat!(
+        "# Epistem Workspace\n\n",
+        "This directory was initialized by `epistem init`.\n\n",
+        "Installed capabilities live under `capabilities/`.\n\n",
+        "## Next Steps\n\n",
+        "- Add installed capabilities under `capabilities/`.\n",
+        "- Use `epistem learn <capability>` to acquire a capability.\n"
+    ));
 
     write_if_missing(&manifest_path, &serde_yaml_ng::to_string(&workspace)?)?;
     write_if_missing(&workspace_doc_path, &workspace_doc)?;
@@ -150,10 +148,7 @@ fn validate(path: PathBuf) {
 }
 
 fn validation_rows(report: &crate::manifest::ManifestValidationReport) -> Vec<ValidationRow> {
-    let mut rows = rows_from_fields(
-        [("path", report.path.display().to_string())],
-        report.valid,
-    );
+    let mut rows = rows_from_fields([("path", report.path.display().to_string())], report.valid);
 
     if let Some(manifest) = report.manifest.as_ref() {
         rows.extend(manifest_rows(manifest, report.valid));
@@ -213,7 +208,11 @@ fn issue_rows(issues: &[crate::manifest::validation::ValidationIssue]) -> Vec<Va
         .collect()
 }
 
-fn validation_row(field: impl Into<String>, value: impl Into<String>, valid: bool) -> ValidationRow {
+fn validation_row(
+    field: impl Into<String>,
+    value: impl Into<String>,
+    valid: bool,
+) -> ValidationRow {
     ValidationRow {
         field: field.into(),
         value: value.into(),

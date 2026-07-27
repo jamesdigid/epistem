@@ -80,14 +80,23 @@ fn cli_learns_from_a_github_provider_via_git_clone() {
     write_fake_git(&shim_bin);
 
     let base_url = format!("file://{}", remote_root.path().display());
-    let path_env = format!("{}:{}", shim_bin.display(), std::env::var("PATH").expect("path"));
+    let path_env = format!(
+        "{}:{}",
+        shim_bin.display(),
+        std::env::var("PATH").expect("path")
+    );
 
     AssertCommand::cargo_bin("epistem")
         .expect("binary")
         .current_dir(workspace.path())
         .env("EPISTEM_GITHUB_BASE_URL", base_url)
         .env("PATH", path_env)
-        .args(["--registry", registry.path().to_str().expect("registry"), "learn", "browser-attach"])
+        .args([
+            "--registry",
+            registry.path().to_str().expect("registry"),
+            "learn",
+            "browser-attach",
+        ])
         .assert()
         .success()
         .stdout(contains("learned capability browser-attach"));

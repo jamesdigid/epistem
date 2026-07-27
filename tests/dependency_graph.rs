@@ -52,7 +52,10 @@ fn builds_dependency_graph() {
 
     assert_eq!(
         graph.nodes(),
-        vec!["browser-attach-runtime".to_string(), "gmail-send-runtime".to_string()]
+        vec![
+            "browser-attach-runtime".to_string(),
+            "gmail-send-runtime".to_string()
+        ]
     );
     assert_eq!(graph.unresolved_requirements(), Vec::<String>::new());
     assert_eq!(graph.topological_order().expect("toposort"), graph.nodes());

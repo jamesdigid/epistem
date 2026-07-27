@@ -24,7 +24,12 @@ fn cli_learns_a_provider_and_records_it() {
     Command::cargo_bin("epistem")
         .expect("binary")
         .current_dir(tempdir.path())
-        .args(["--registry", registry.to_str().expect("registry path"), "learn", "browser-attach"])
+        .args([
+            "--registry",
+            registry.to_str().expect("registry path"),
+            "learn",
+            "browser-attach",
+        ])
         .assert()
         .success()
         .stdout(contains("learned capability browser-attach"));
@@ -42,7 +47,12 @@ fn cli_reports_verification_failures() {
     Command::cargo_bin("epistem")
         .expect("binary")
         .current_dir(tempdir.path())
-        .args(["--registry", registry.to_str().expect("registry path"), "learn", "browser-attach-fail"])
+        .args([
+            "--registry",
+            registry.to_str().expect("registry path"),
+            "learn",
+            "browser-attach-fail",
+        ])
         .assert()
         .failure()
         .stderr(contains("verification"));

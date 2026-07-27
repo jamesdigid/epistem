@@ -5,7 +5,9 @@ use std::path::{Path, PathBuf};
 use crate::error::{EpistemError, Result};
 use crate::manifest::models::WorkspaceManifest;
 use crate::manifest::validation::ManifestValidator;
-use crate::provider::{GitProviderFetcher, LocalProviderFetcher, ProviderFetcher, ProviderRef, ProviderScheme};
+use crate::provider::{
+    GitProviderFetcher, LocalProviderFetcher, ProviderFetcher, ProviderRef, ProviderScheme,
+};
 use crate::reasoning::{CandidateProvider, DeterministicSelector, ProviderSelector};
 use crate::registry::RegistryIndex;
 use crate::runtime::RuntimeController;
@@ -50,7 +52,9 @@ impl LearnEngine {
         if workspace_contains(workspace_root, capability)? {
             return Ok(LearnOutcome {
                 capability: capability.to_string(),
-                provider_root: workspace_root.join("capabilities").join(sanitize_capability(capability)),
+                provider_root: workspace_root
+                    .join("capabilities")
+                    .join(sanitize_capability(capability)),
             });
         }
 
@@ -132,7 +136,11 @@ fn fetch_provider(
     }
 }
 
-fn install_provider(workspace_root: &Path, capability: &str, source_root: &Path) -> Result<PathBuf> {
+fn install_provider(
+    workspace_root: &Path,
+    capability: &str,
+    source_root: &Path,
+) -> Result<PathBuf> {
     let destination = workspace_root
         .join("capabilities")
         .join(sanitize_capability(capability));
@@ -160,7 +168,11 @@ fn record_workspace_capability(workspace_root: &Path, capability: &str) -> Resul
         }
     };
 
-    if !workspace.capabilities.iter().any(|entry| entry == capability) {
+    if !workspace
+        .capabilities
+        .iter()
+        .any(|entry| entry == capability)
+    {
         workspace.capabilities.push(capability.to_string());
     }
 
@@ -176,7 +188,10 @@ fn workspace_contains(workspace_root: &Path, capability: &str) -> Result<bool> {
 
     let source = fs::read_to_string(manifest_path)?;
     let workspace = serde_yaml_ng::from_str::<WorkspaceManifest>(&source)?;
-    Ok(workspace.capabilities.iter().any(|entry| entry == capability))
+    Ok(workspace
+        .capabilities
+        .iter()
+        .any(|entry| entry == capability))
 }
 
 fn sanitize_capability(capability: &str) -> String {

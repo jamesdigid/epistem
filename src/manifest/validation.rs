@@ -125,7 +125,11 @@ fn validate_manifest(manifest: &CapabilityManifest, root_dir: &Path) -> Vec<Vali
     issues.extend(validate_install(manifest.install.as_ref()));
     issues.extend(validate_runtime(&manifest.runtime));
     issues.extend(validate_communication(manifest.communication.as_ref()));
-    issues.extend(validate_path_field(root_dir, "prompt", manifest.prompt.as_deref()));
+    issues.extend(validate_path_field(
+        root_dir,
+        "prompt",
+        manifest.prompt.as_deref(),
+    ));
     issues.extend(validate_tests(root_dir, manifest.tests.as_ref()));
     issues.extend(validate_text_list("keywords", &manifest.keywords));
 
@@ -215,8 +219,16 @@ fn validate_tests(root_dir: &Path, tests: Option<&TestSuitePaths>) -> Vec<Valida
     };
 
     let mut issues = Vec::new();
-    issues.extend(validate_path_field(root_dir, "tests.startup", tests.startup.as_deref()));
-    issues.extend(validate_path_field(root_dir, "tests.smoke", tests.smoke.as_deref()));
+    issues.extend(validate_path_field(
+        root_dir,
+        "tests.startup",
+        tests.startup.as_deref(),
+    ));
+    issues.extend(validate_path_field(
+        root_dir,
+        "tests.smoke",
+        tests.smoke.as_deref(),
+    ));
     issues
 }
 

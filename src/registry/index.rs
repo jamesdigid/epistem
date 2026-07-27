@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{EpistemError, Result};
@@ -57,7 +57,10 @@ impl RegistryIndex {
                 continue;
             }
             let source = file.contents_utf8().ok_or_else(|| {
-                EpistemError::Registry(format!("embedded registry file is not utf-8: {}", file.path().display()))
+                EpistemError::Registry(format!(
+                    "embedded registry file is not utf-8: {}",
+                    file.path().display()
+                ))
             })?;
             let registry_entry: RegistryEntry = serde_yaml_ng::from_str(source)?;
             let providers = registry_entry
@@ -65,7 +68,10 @@ impl RegistryIndex {
                 .iter()
                 .map(|provider| {
                     let reference: ProviderRef = provider.parse()?;
-                    Ok(resolve_provider_ref(Path::new(env!("CARGO_MANIFEST_DIR")), reference))
+                    Ok(resolve_provider_ref(
+                        Path::new(env!("CARGO_MANIFEST_DIR")),
+                        reference,
+                    ))
                 })
                 .collect::<Result<Vec<_>>>()?;
             entries.insert(registry_entry.capability, providers);

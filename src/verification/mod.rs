@@ -51,11 +51,7 @@ impl VerificationRunner {
         Ok(())
     }
 
-    fn verify_suite(
-        &self,
-        suite: &VerificationSuite,
-        session: &mut RuntimeSession,
-    ) -> Result<()> {
+    fn verify_suite(&self, suite: &VerificationSuite, session: &mut RuntimeSession) -> Result<()> {
         for step in &suite.steps {
             let response = session.send_json(&serde_json::json!({
                 "operation": step.operation,

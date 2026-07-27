@@ -80,11 +80,12 @@ impl RuntimeController {
             return Ok(RuntimeSession::available());
         }
 
-        let command = manifest
-            .runtime
-            .initialize
-            .as_deref()
-            .ok_or_else(|| EpistemError::Registry(format!("missing runtime initialize command for {}", manifest.name)))?;
+        let command = manifest.runtime.initialize.as_deref().ok_or_else(|| {
+            EpistemError::Registry(format!(
+                "missing runtime initialize command for {}",
+                manifest.name
+            ))
+        })?;
 
         let mut child = Command::new("sh")
             .arg("-lc")
@@ -134,9 +135,9 @@ impl RuntimeController {
                     )))
                 }
             }
-            ReadyProbe::Tcp { port } => {
-                TcpStream::connect(("127.0.0.1", *port)).map(|_| ()).map_err(EpistemError::from)
-            }
+            ReadyProbe::Tcp { port } => TcpStream::connect(("127.0.0.1", *port))
+                .map(|_| ())
+                .map_err(EpistemError::from),
             ReadyProbe::StdioHandshake { expected } => {
                 let Some(stdout) = session.stdout.as_mut() else {
                     return Err(EpistemError::Registry(

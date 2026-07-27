@@ -43,7 +43,12 @@ fn learns_and_records_edge_browser_attach() {
     assert!(workspace_manifest.exists());
     let source = fs::read_to_string(workspace_manifest).expect("workspace manifest");
     let workspace = serde_yaml_ng::from_str::<WorkspaceManifest>(&source).expect("workspace yaml");
-    assert!(workspace.capabilities.iter().any(|capability| capability == "browser-attach"));
+    assert!(
+        workspace
+            .capabilities
+            .iter()
+            .any(|capability| capability == "browser-attach")
+    );
 
     let installed_manifest = tempdir
         .path()
