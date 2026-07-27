@@ -1,0 +1,25 @@
+name: browser-attach-fail
+version: 1.0.0
+description: Provider that intentionally fails verification
+capabilities:
+  - browser-attach-fail
+dependencies: []
+install:
+  requires: []
+  steps: []
+runtime:
+  type: launch
+  initialize: sh bin/provider.sh
+  ready:
+    type: stdio_handshake
+    expected: ready
+  shutdown: null
+communication:
+  transport: stdio
+prompt: prompt.md
+tests:
+  startup: tests/startup.yaml
+  smoke: tests/smoke.yaml
+keywords:
+  - browser
+  - stdio

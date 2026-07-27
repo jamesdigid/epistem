@@ -1,7 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use crate::manifest::models::{ArtifactPaths, CapabilityManifest};
-use crate::manifest::parser::{JsonManifestParser, ManifestParser};
+use crate::manifest::models::{
+    CapabilityManifest, InstallSpec, ReadyProbe, RuntimeSpec, RuntimeType, TestSuitePaths,
+};
+use crate::manifest::parser::{ManifestParser, YamlManifestParser};
 use crate::utils::paths::{MANIFEST_FILENAME, manifest_path_for};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,7 +52,7 @@ pub struct ManifestValidator {
 impl Default for ManifestValidator {
     fn default() -> Self {
         Self {
-            parser: Box::new(JsonManifestParser),
+            parser: Box::new(YamlManifestParser),
         }
     }
 }
@@ -62,15 +64,16 @@ impl ManifestValidator {
 
     pub fn validate_path<P: AsRef<Path>>(&self, path: P) -> ManifestValidationReport {
         let path = path.as_ref();
-        let manifest_path = if path.is_dir() {
-            manifest_path_for(path)
+        let (manifest_path, root_dir) = if path.is_dir() {
+            (manifest_path_for(path), path)
         } else {
-            path.to_path_buf()
+            let root_dir = path.parent().unwrap_or(path);
+            (path.to_path_buf(), root_dir)
         };
 
         match self.parser.parse_path(&manifest_path) {
             Ok(manifest) => {
-                let issues = validate_manifest(&manifest);
+                let issues = validate_manifest(&manifest, root_dir);
                 ManifestValidationReport::from_manifest(manifest_path, manifest, issues)
             }
             Err(error) => ManifestValidationReport::invalid(
@@ -86,7 +89,7 @@ impl ManifestValidator {
     pub fn validate_data(&self, data: &str) -> ManifestValidationReport {
         match self.parser.parse_str(data) {
             Ok(manifest) => {
-                let issues = validate_manifest(&manifest);
+                let issues = validate_manifest(&manifest, Path::new("."));
                 ManifestValidationReport::from_manifest(PathBuf::from("<memory>"), manifest, issues)
             }
             Err(error) => ManifestValidationReport::invalid(
@@ -100,7 +103,7 @@ impl ManifestValidator {
     }
 }
 
-fn validate_manifest(manifest: &CapabilityManifest) -> Vec<ValidationIssue> {
+fn validate_manifest(manifest: &CapabilityManifest, root_dir: &Path) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
 
     if manifest.name.trim().is_empty() {
@@ -117,55 +120,139 @@ fn validate_manifest(manifest: &CapabilityManifest) -> Vec<ValidationIssue> {
         });
     }
 
-    issues.extend(validate_contracts(&manifest.contracts));
-    issues.extend(validate_dependencies(&manifest.dependencies));
+    issues.extend(validate_text_list("capabilities", &manifest.capabilities));
+    issues.extend(validate_text_list("dependencies", &manifest.dependencies));
+    issues.extend(validate_install(manifest.install.as_ref()));
+    issues.extend(validate_runtime(&manifest.runtime));
+    issues.extend(validate_communication(manifest.communication.as_ref()));
+    issues.extend(validate_path_field(
+        root_dir,
+        "prompt",
+        manifest.prompt.as_deref(),
+    ));
+    issues.extend(validate_tests(root_dir, manifest.tests.as_ref()));
     issues.extend(validate_text_list("keywords", &manifest.keywords));
 
-    if let Some(artifacts) = &manifest.artifacts {
-        issues.extend(validate_artifacts(artifacts));
-    }
-
     issues
 }
 
-fn validate_contracts(contracts: &[crate::manifest::models::ContractSpec]) -> Vec<ValidationIssue> {
+fn validate_install(install: Option<&InstallSpec>) -> Vec<ValidationIssue> {
+    let Some(install) = install else {
+        return Vec::new();
+    };
+
     let mut issues = Vec::new();
+    issues.extend(validate_text_list("install.requires", &install.requires));
+    issues.extend(validate_text_list("install.steps", &install.steps));
+    issues
+}
 
-    for (index, contract) in contracts.iter().enumerate() {
-        if contract.id.trim().is_empty() {
-            issues.push(ValidationIssue {
-                field: format!("contracts[{index}].id"),
-                message: "must not be blank".to_string(),
-            });
+fn validate_runtime(runtime: &RuntimeSpec) -> Vec<ValidationIssue> {
+    let mut issues = Vec::new();
+    match runtime.kind {
+        RuntimeType::Available => {}
+        _ => {
+            if runtime
+                .initialize
+                .as_deref()
+                .is_none_or(|value| value.trim().is_empty())
+            {
+                issues.push(ValidationIssue {
+                    field: "runtime.initialize".to_string(),
+                    message: "must not be blank".to_string(),
+                });
+            }
         }
-        if contract.version.trim().is_empty() {
-            issues.push(ValidationIssue {
-                field: format!("contracts[{index}].version"),
-                message: "must not be blank".to_string(),
-            });
+    }
+
+    if let Some(ready) = &runtime.ready {
+        match ready {
+            ReadyProbe::Process => {}
+            ReadyProbe::Command { command } => {
+                if command.trim().is_empty() {
+                    issues.push(ValidationIssue {
+                        field: "runtime.ready.command".to_string(),
+                        message: "must not be blank".to_string(),
+                    });
+                }
+            }
+            ReadyProbe::Tcp { port } => {
+                if *port == 0 {
+                    issues.push(ValidationIssue {
+                        field: "runtime.ready.port".to_string(),
+                        message: "must be greater than zero".to_string(),
+                    });
+                }
+            }
+            ReadyProbe::StdioHandshake { expected } => {
+                if expected.trim().is_empty() {
+                    issues.push(ValidationIssue {
+                        field: "runtime.ready.expected".to_string(),
+                        message: "must not be blank".to_string(),
+                    });
+                }
+            }
         }
     }
 
     issues
 }
 
-fn validate_dependencies(
-    dependencies: &[crate::manifest::models::DependencySpec],
+fn validate_communication(
+    communication: Option<&crate::manifest::models::CommunicationSpec>,
 ) -> Vec<ValidationIssue> {
-    dependencies
-        .iter()
-        .enumerate()
-        .filter_map(|(index, dependency)| {
-            if dependency.contract.trim().is_empty() {
-                Some(ValidationIssue {
-                    field: format!("dependencies[{index}].contract"),
-                    message: "must not be blank".to_string(),
-                })
-            } else {
-                None
-            }
-        })
-        .collect()
+    let Some(communication) = communication else {
+        return Vec::new();
+    };
+
+    match communication.transport {
+        crate::manifest::models::TransportType::Stdio
+        | crate::manifest::models::TransportType::Http
+        | crate::manifest::models::TransportType::Tcp => {}
+    }
+    Vec::new()
+}
+
+fn validate_tests(root_dir: &Path, tests: Option<&TestSuitePaths>) -> Vec<ValidationIssue> {
+    let Some(tests) = tests else {
+        return Vec::new();
+    };
+
+    let mut issues = Vec::new();
+    issues.extend(validate_path_field(
+        root_dir,
+        "tests.startup",
+        tests.startup.as_deref(),
+    ));
+    issues.extend(validate_path_field(
+        root_dir,
+        "tests.smoke",
+        tests.smoke.as_deref(),
+    ));
+    issues
+}
+
+fn validate_path_field(root_dir: &Path, field: &str, value: Option<&str>) -> Vec<ValidationIssue> {
+    let Some(value) = value else {
+        return Vec::new();
+    };
+
+    if value.trim().is_empty() {
+        return vec![ValidationIssue {
+            field: field.to_string(),
+            message: "must not be blank".to_string(),
+        }];
+    }
+
+    let path = root_dir.join(value);
+    if path.exists() {
+        Vec::new()
+    } else {
+        vec![ValidationIssue {
+            field: field.to_string(),
+            message: format!("path does not exist: {}", path.display()),
+        }]
+    }
 }
 
 fn validate_text_list(field: &str, values: &[String]) -> Vec<ValidationIssue> {
@@ -183,23 +270,4 @@ fn validate_text_list(field: &str, values: &[String]) -> Vec<ValidationIssue> {
             }
         })
         .collect()
-}
-
-fn validate_artifacts(artifacts: &ArtifactPaths) -> Vec<ValidationIssue> {
-    let mut issues = Vec::new();
-
-    for (field, value) in [
-        ("artifacts.guide", &artifacts.guide),
-        ("artifacts.examples", &artifacts.examples),
-        ("artifacts.tests", &artifacts.tests),
-    ] {
-        if value.as_deref().is_some_and(|text| text.trim().is_empty()) {
-            issues.push(ValidationIssue {
-                field: field.to_string(),
-                message: "must not be blank".to_string(),
-            });
-        }
-    }
-
-    issues
 }

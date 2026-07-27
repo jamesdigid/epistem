@@ -1,14 +1,14 @@
-use epistem::manifest::JsonManifestParser;
 use epistem::manifest::ManifestParser;
+use epistem::manifest::YamlManifestParser;
 
 #[test]
 fn parses_manifest() {
-    let parser = JsonManifestParser;
+    let parser = YamlManifestParser;
     let manifest = parser
-        .parse_path(std::path::Path::new("examples/gmail-send/epistem.json"))
+        .parse_path(std::path::Path::new("examples/gmail-send/capability.yaml"))
         .expect("manifest should parse");
 
-    assert_eq!(manifest.name, "@epistem/gmail-send");
+    assert_eq!(manifest.name, "gmail-send");
     assert_eq!(manifest.version, "1.0.0");
-    assert_eq!(manifest.contracts[0].id, "send-email");
+    assert_eq!(manifest.capabilities, vec!["gmail"]);
 }

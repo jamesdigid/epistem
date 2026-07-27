@@ -236,7 +236,7 @@ main() {
   add_to_path_hint
 
   printf 'Get started:\n'
-  printf '    %s%s learn browser-generic%s\n' "$BOLD" "$BIN_NAME" "$RESET"
+  printf '    %s%s learn browser-attach%s\n' "$BOLD" "$BIN_NAME" "$RESET"
 }
 
 main "$@"

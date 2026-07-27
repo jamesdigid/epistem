@@ -2,81 +2,56 @@
 
 Epistem is organized around capabilities, not packages.
 
-The domain shape is:
+## Core Model
 
-```text
-Capability
-│
-├── Metadata
-├── Contracts
-├── Providers
-├── Artifacts
-└── Dependencies
+- **Capability**: the stable public contract a user asks for, such as `browser-attach`.
+- **Provider**: a project that satisfies one or more capabilities through a `capability.yaml` manifest.
+- **Registry**: a lightweight index that maps capabilities to candidate providers.
+- **Runtime**: the lifecycle used to acquire, initialize, and verify a provider.
+- **Verification**: startup and smoke tests that prove the provider is ready after installation.
+
+## Phase 1 Flow
+
+```mermaid
+flowchart TD
+  learn["epistem learn browser-attach"] --> registry[Lookup registry entry]
+  registry --> candidates[Candidate providers]
+  candidates --> manifest[Read provider capability.yaml]
+  manifest --> select[Select compatible provider]
+  select --> acquire[Acquire provider]
+  acquire --> init[Initialize runtime]
+  init --> verify[Run verification tests]
+  verify --> ready[Record capability in epistem.yaml]
 ```
 
-Capability is the aggregate root.
-Contract defines the interface and guarantees.
-Providers are implementations.
-Dependencies express capability requirements.
-Artifacts are everything needed to understand or execute the provider.
-
-A higher-order capability composes other capabilities into a new reusable abstraction
-with its own contract surface.
-
-The layers are:
-
-Capability
-
-↓
-
-Catalog
-
-↓
-
-Registry
-
-Catalog is the reasoning surface for lookup, semantic discovery, and dependency
-traversal. Registry handles persistence, transport, and synchronization.
-
-The filesystem only stores capabilities. A directory is just one way to load a
-capability source; it is not the domain object itself.
-
-## Modules
+## Repository Layout
 
 ### `src/manifest`
-Owns the manifest schema, parsing, and validation rules for capabilities and the
-contracts they satisfy.
-
-### `src/storage`
-Filesystem adapter that loads capabilities from disk.
-
-### `src/catalog`
-The reasoning surface for lookup, semantic discovery, and dependency traversal.
-It composes registry, search, and resolver capabilities.
+Provider manifest schema, YAML parsing, and validation.
 
 ### `src/registry`
-Defines infrastructure for persistence, transport, and synchronization of capabilities.
-`LocalRegistry` is the current local implementation, while `RemoteRegistry` is a stub
-for later work.
+Capability-to-provider registry loading and embedded registry support.
 
-### `src/search`
-Defines the catalog search interface. `LocalSearch` is a stub until semantic search exists.
+### `src/provider`
+Provider reference parsing and fetch helpers for local and GitHub sources.
 
-### `src/resolver`
-Builds dependency graphs from contracts behind traits.
+### `src/reasoning`
+Deterministic provider selection and environment checks.
 
-### `src/cli`
-Provides the command line surface. `validate` is implemented now; the rest are
-placeholders so the interface is stable early.
-
-### `src/models`
-Contains small shared domain primitives.
-
-### `src/error`
-Centralizes application errors so adapters can translate failures cleanly.
+### `src/runtime`
+Runtime launch, readiness checks, and shutdown handling.
 
 ### `src/verification`
-Reserved for trust, verification, outcome validation, and human steering primitives.
+Verification suite parsing and execution.
+
+### `src/learn`
+The end-to-end orchestration pipeline for `epistem learn`.
+
+### `src/cli`
+Command-line entry points for `init`, `validate`, `learn`, and graph inspection.
+
+### `src/storage`
+Filesystem adapter used to load installed providers.
 
 ### `src/utils`
-Holds filesystem helpers and other reusable utilities.
+Filesystem path helpers and shared utilities.

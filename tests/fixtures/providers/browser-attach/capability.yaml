@@ -1,0 +1,25 @@
+name: browser-attach
+version: 1.0.0
+description: Attach to a browser over stdio for tests
+capabilities:
+  - browser-attach
+dependencies: []
+install:
+  requires: []
+  steps: []
+runtime:
+  type: launch
+  initialize: sh bin/provider.sh
+  ready:
+    type: stdio_handshake
+    expected: ready
+  shutdown: null
+communication:
+  transport: stdio
+prompt: prompt.md
+tests:
+  startup: tests/startup.yaml
+  smoke: tests/smoke.yaml
+keywords:
+  - browser
+  - stdio

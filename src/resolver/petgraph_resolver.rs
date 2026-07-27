@@ -72,15 +72,15 @@ impl DependencyResolver for PetgraphDependencyResolver {
     fn build(&self, manifests: &[CapabilityManifest]) -> Result<Box<dyn DependencyGraph>> {
         let mut graph: DiGraph<String, String> = DiGraph::new();
         let mut indices: HashMap<String, NodeIndex> = HashMap::new();
-        let mut contract_index: HashMap<String, Vec<String>> = HashMap::new();
+        let mut capability_index: HashMap<String, Vec<String>> = HashMap::new();
 
         for manifest in manifests {
             let index = graph.add_node(manifest.name.clone());
             indices.insert(manifest.name.clone(), index);
 
-            for contract in &manifest.contracts {
-                contract_index
-                    .entry(contract.id.clone())
+            for capability in &manifest.capabilities {
+                capability_index
+                    .entry(capability.clone())
                     .or_default()
                     .push(manifest.name.clone());
             }
@@ -94,15 +94,15 @@ impl DependencyResolver for PetgraphDependencyResolver {
             };
 
             for dependency in &manifest.dependencies {
-                match contract_index.get(&dependency.contract) {
+                match capability_index.get(dependency) {
                     Some(providers) => {
                         for provider_name in providers {
                             if let Some(provider) = indices.get(provider_name) {
-                                graph.add_edge(*provider, dependent, dependency.contract.clone());
+                                graph.add_edge(*provider, dependent, dependency.clone());
                             }
                         }
                     }
-                    None => unresolved.push(dependency.contract.clone()),
+                    None => unresolved.push(dependency.clone()),
                 }
             }
         }

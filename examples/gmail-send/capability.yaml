@@ -1,0 +1,25 @@
+name: gmail-send
+version: 1.0.0
+description: Send email using Gmail
+capabilities:
+  - gmail
+dependencies:
+  - authenticate-google
+install:
+  requires: []
+  steps: []
+runtime:
+  type: available
+  initialize: null
+  ready: null
+  shutdown: null
+communication:
+  transport: stdio
+prompt: prompt.md
+tests:
+  startup: tests/startup.yaml
+  smoke: tests/smoke.yaml
+keywords:
+  - gmail
+  - email
+  - notification

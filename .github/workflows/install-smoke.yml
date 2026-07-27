@@ -1,0 +1,30 @@
+name: Install Smoke
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  smoke:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Install Epistem
+        run: |
+          sh ./install.sh
+          echo "$HOME/.epistem/bin" >> "$GITHUB_PATH"
+        env:
+          EPISTEM_VERSION: ${{ github.event.release.tag_name }}
+
+      - name: Verify binary and learn flow
+        run: |
+          epistem --version
+          epistem init
+          epistem learn browser-attach --registry tests/fixtures/registry

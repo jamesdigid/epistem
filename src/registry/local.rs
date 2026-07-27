@@ -46,9 +46,9 @@ impl RegistryProvider for LocalRegistry {
             .filter(|capability_record| {
                 capability_record
                     .manifest()
-                    .contracts
+                    .capabilities
                     .iter()
-                    .any(|entry| entry.id == contract)
+                    .any(|entry| entry == contract)
             })
             .cloned()
             .collect()

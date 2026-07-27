@@ -10,6 +10,9 @@ pub enum EpistemError {
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
 
+    #[error("YAML error: {0}")]
+    Yaml(#[from] serde_yaml_ng::Error),
+
     #[error("missing capability manifest at {0}")]
     MissingManifest(PathBuf),
 

@@ -11,11 +11,11 @@ pub trait ManifestParser: Send + Sync {
 }
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct JsonManifestParser;
+pub struct YamlManifestParser;
 
-impl ManifestParser for JsonManifestParser {
+impl ManifestParser for YamlManifestParser {
     fn parse_str(&self, source: &str) -> Result<CapabilityManifest> {
-        Ok(serde_json::from_str(source)?)
+        Ok(serde_yaml_ng::from_str(source)?)
     }
 
     fn parse_path(&self, path: &Path) -> Result<CapabilityManifest> {

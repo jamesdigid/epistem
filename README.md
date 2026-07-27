@@ -2,72 +2,49 @@
 
 Epistem is an open capability registry for autonomous agents.
 
-Instead of distributing executable code, Epistem distributes reusable capabilities that agents can discover, compose, verify, and satisfy through interchangeable providers.
+It helps agents discover, acquire, initialize, and verify capabilities through interchangeable providers.
 
-It is written in Rust and intentionally focuses on capability management—not agent runtimes, LLM orchestration, or workflow execution.
-
----
-
-## Getting Started
-
-### 1. Install Epistem
+## Quick Start
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jamesdigid/epistem/main/install.sh | sh
 ```
 
-### 2. Create an agent workspace
-
 ```bash
-mkdir amy
-cd amy
-
 epistem init
+epistem learn browser-attach
 ```
 
-This creates a new capability workspace.
+`epistem init` creates a workspace manifest (`epistem.yaml`) plus a `capabilities/` directory.
+`epistem learn` looks up a capability in the registry, resolves a provider, acquires it, initializes it, and runs verification tests before marking it installed.
 
-### 3. Teach your agent something new
+## Provider Layout
 
-```bash
-epistem learn browser-generics
-```
-
-Epistem resolves dependencies, downloads the required artifacts, and installs the capability into your agent workspace.
-
----
-
-
-
-## Project Structure
-
-After running `epistem init`:
+Existing projects become Epistem-compatible by adding a lightweight `capability.yaml` manifest.
 
 ```text
-amy/
-├── epistem.json
-├── capabilities/
-└── EPISTEM.md
+my-project/
+├── capability.yaml
+├── prompt.md
+├── tests/
+└── existing project files...
 ```
 
----
 
 
+## Current Phase
 
-## Current Status
+Phase 1 focuses on bootstrap infrastructure:
 
-The project is in its early infrastructure phase.
+- capability discovery
+- provider lookup
+- installation and acquisition
+- runtime initialization
+- verification tests
+- workspace recording
+- release and install smoke checks
 
-Current functionality includes:
 
-- Capability manifest parsing and validation
-- Local capability loading
-- Dependency graph construction
-- Registry, catalog, and search abstractions
-- CLI scaffolding
-- Unit tests for core components
-
----
 
 ## Development
 
@@ -79,20 +56,13 @@ cargo clippy
 
 Requires Rust 1.85+.
 
----
-
-
-
 ## Roadmap
 
-Near-term milestones include:
-
-- Build out a browser generic capability
-- Work out the agent integration schema
-- Runtime integration
-- Capability installation
-- Semantic search
-- Dependency resolution
+- GitHub-backed provider discovery
+- richer provider selection
+- semantic search
+- remote registries
+- broader capability sets such as `browser-generic`
 
 
 
