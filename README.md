@@ -20,11 +20,11 @@ epistem learn browser-attach
 
 ## Provider Layout
 
-Existing projects become Epistem-compatible by adding a lightweight `capability.yaml` manifest.
+Existing projects become Epistem-compatible by adding a lightweight `capabilities.yaml` manifest.
 
 ```text
 my-project/
-├── capability.yaml
+├── capabilities.yaml
 ├── prompt.md
 ├── tests/
 └── existing project files...
