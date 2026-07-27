@@ -1,0 +1,5 @@
+name: smoke
+steps:
+  - operation: ping
+    expect:
+      status: ok

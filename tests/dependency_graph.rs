@@ -1,34 +1,48 @@
-use epistem::manifest::{CapabilityManifest, ContractSpec, DependencySpec};
+use epistem::manifest::{CapabilityManifest, CommunicationSpec, RuntimeSpec, RuntimeType};
 use epistem::resolver::{DependencyResolver, PetgraphDependencyResolver};
 
 #[test]
 fn builds_dependency_graph() {
     let manifests = vec![
         CapabilityManifest {
-            name: "@epistem/authenticate-google".to_string(),
+            name: "browser-attach-runtime".to_string(),
             version: "1.0.0".to_string(),
             description: None,
-            contracts: vec![ContractSpec {
-                id: "authenticate-google".to_string(),
-                version: "^1.0".to_string(),
-            }],
+            capabilities: vec!["browser-generic".to_string()],
             dependencies: vec![],
+            install: None,
+            runtime: RuntimeSpec {
+                kind: RuntimeType::Available,
+                initialize: None,
+                ready: None,
+                shutdown: None,
+            },
+            communication: Some(CommunicationSpec {
+                transport: epistem::manifest::TransportType::Stdio,
+            }),
+            prompt: None,
+            tests: None,
             keywords: vec![],
-            artifacts: None,
         },
         CapabilityManifest {
-            name: "@epistem/gmail-send".to_string(),
+            name: "gmail-send-runtime".to_string(),
             version: "1.0.0".to_string(),
             description: None,
-            contracts: vec![ContractSpec {
-                id: "send-email".to_string(),
-                version: "^1.0".to_string(),
-            }],
-            dependencies: vec![DependencySpec {
-                contract: "authenticate-google".to_string(),
-            }],
+            capabilities: vec!["gmail".to_string()],
+            dependencies: vec!["browser-generic".to_string()],
+            install: None,
+            runtime: RuntimeSpec {
+                kind: RuntimeType::Available,
+                initialize: None,
+                ready: None,
+                shutdown: None,
+            },
+            communication: Some(CommunicationSpec {
+                transport: epistem::manifest::TransportType::Stdio,
+            }),
+            prompt: None,
+            tests: None,
             keywords: vec![],
-            artifacts: None,
         },
     ];
 
@@ -38,13 +52,10 @@ fn builds_dependency_graph() {
 
     assert_eq!(
         graph.nodes(),
-        vec![
-            "@epistem/authenticate-google".to_string(),
-            "@epistem/gmail-send".to_string()
-        ]
+        vec!["browser-attach-runtime".to_string(), "gmail-send-runtime".to_string()]
     );
     assert_eq!(graph.unresolved_requirements(), Vec::<String>::new());
     assert_eq!(graph.topological_order().expect("toposort"), graph.nodes());
     assert_eq!(graph.edges().len(), 1);
-    assert_eq!(graph.edges()[0].contract, "authenticate-google");
+    assert_eq!(graph.edges()[0].contract, "browser-generic");
 }

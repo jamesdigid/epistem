@@ -1,0 +1,3 @@
+capability: browser-attach
+providers:
+  - github:jamesdigid/browser-attach
