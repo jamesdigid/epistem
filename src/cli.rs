@@ -112,14 +112,15 @@ fn init(target_dir: Option<PathBuf>) -> crate::error::Result<()> {
         capabilities: Vec::new(),
     };
 
-    let workspace_doc = format!(concat!(
+    let workspace_doc = concat!(
         "# Epistem Workspace\n\n",
         "This directory was initialized by `epistem init`.\n\n",
         "Installed capabilities live under `capabilities/`.\n\n",
         "## Next Steps\n\n",
         "- Add installed capabilities under `capabilities/`.\n",
         "- Use `epistem learn <capability>` to acquire a capability.\n"
-    ));
+    )
+    .to_string();
 
     write_if_missing(&manifest_path, &serde_yaml_ng::to_string(&workspace)?)?;
     write_if_missing(&workspace_doc_path, &workspace_doc)?;

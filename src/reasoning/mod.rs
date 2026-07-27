@@ -62,7 +62,7 @@ fn environment_satisfies(manifest: &CapabilityManifest) -> bool {
 
 fn command_is_available(requirement: &str) -> bool {
     let command = requirement
-        .split(|character: char| character == ' ' || character == '>' || character == '=')
+        .split([' ', '>', '='])
         .next()
         .unwrap_or(requirement)
         .trim();

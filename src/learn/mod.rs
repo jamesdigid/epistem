@@ -33,83 +33,82 @@ impl LearnEngine {
         let workspace_root = std::env::current_dir()?;
         let registry = load_registry(options)?;
         let mut visited = HashSet::new();
-        self.learn_inner(capability, &workspace_root, &registry, &mut visited)
+        learn_inner(capability, &workspace_root, &registry, &mut visited)
+    }
+}
+
+fn learn_inner(
+    capability: &str,
+    workspace_root: &Path,
+    registry: &RegistryIndex,
+    visited: &mut HashSet<String>,
+) -> Result<LearnOutcome> {
+    if !visited.insert(capability.to_string()) {
+        return Err(EpistemError::Registry(format!(
+            "cyclic capability dependency detected at {capability}"
+        )));
     }
 
-    fn learn_inner(
-        &self,
-        capability: &str,
-        workspace_root: &Path,
-        registry: &RegistryIndex,
-        visited: &mut HashSet<String>,
-    ) -> Result<LearnOutcome> {
-        if !visited.insert(capability.to_string()) {
-            return Err(EpistemError::Registry(format!(
-                "cyclic capability dependency detected at {capability}"
-            )));
-        }
-
-        if workspace_contains(workspace_root, capability)? {
-            return Ok(LearnOutcome {
-                capability: capability.to_string(),
-                provider_root: workspace_root
-                    .join("capabilities")
-                    .join(sanitize_capability(capability)),
-            });
-        }
-
-        let candidates = registry.providers_for(capability);
-        if candidates.is_empty() {
-            return Err(EpistemError::Registry(format!(
-                "no providers registered for {capability}"
-            )));
-        }
-
-        let temp_root = workspace_root.join(".epistem").join("acquired");
-        fs::create_dir_all(&temp_root)?;
-
-        let fetcher = LocalProviderFetcher;
-        let git_fetcher = GitProviderFetcher;
-        let validator = ManifestValidator::default();
-        let selector = DeterministicSelector;
-        let mut candidate_records = Vec::new();
-
-        for reference in candidates {
-            let fetched_root = fetch_provider(&reference, &temp_root, &fetcher, &git_fetcher)?;
-            let report = validator.validate_path(&fetched_root);
-            let Some(manifest) = report.manifest.clone() else {
-                continue;
-            };
-            if !report.valid {
-                continue;
-            }
-            candidate_records.push(CandidateProvider {
-                reference,
-                root: fetched_root,
-                manifest,
-            });
-        }
-
-        let selected = selector.select(capability, candidate_records)?;
-
-        for dependency in selected.manifest.dependencies.clone() {
-            self.learn_inner(&dependency, workspace_root, registry, visited)?;
-        }
-
-        let runtime_controller = RuntimeController;
-        let mut session = runtime_controller.start(&selected.manifest, &selected.root)?;
-        let verification_runner = VerificationRunner;
-        verification_runner.verify(&selected.root, &selected.manifest, &mut session)?;
-        session.shutdown(&selected.manifest, &selected.root)?;
-
-        let installed_root = install_provider(workspace_root, capability, &selected.root)?;
-        record_workspace_capability(workspace_root, capability)?;
-
-        Ok(LearnOutcome {
+    if workspace_contains(workspace_root, capability)? {
+        return Ok(LearnOutcome {
             capability: capability.to_string(),
-            provider_root: installed_root,
-        })
+            provider_root: workspace_root
+                .join("capabilities")
+                .join(sanitize_capability(capability)),
+        });
     }
+
+    let candidates = registry.providers_for(capability);
+    if candidates.is_empty() {
+        return Err(EpistemError::Registry(format!(
+            "no providers registered for {capability}"
+        )));
+    }
+
+    let temp_root = workspace_root.join(".epistem").join("acquired");
+    fs::create_dir_all(&temp_root)?;
+
+    let fetcher = LocalProviderFetcher;
+    let git_fetcher = GitProviderFetcher;
+    let validator = ManifestValidator::default();
+    let selector = DeterministicSelector;
+    let mut candidate_records = Vec::new();
+
+    for reference in candidates {
+        let fetched_root = fetch_provider(&reference, &temp_root, &fetcher, &git_fetcher)?;
+        let report = validator.validate_path(&fetched_root);
+        let Some(manifest) = report.manifest.clone() else {
+            continue;
+        };
+        if !report.valid {
+            continue;
+        }
+        candidate_records.push(CandidateProvider {
+            reference,
+            root: fetched_root,
+            manifest,
+        });
+    }
+
+    let selected = selector.select(capability, candidate_records)?;
+
+    for dependency in selected.manifest.dependencies.clone() {
+        learn_inner(&dependency, workspace_root, registry, visited)?;
+    }
+
+    let runtime_controller = RuntimeController;
+    let mut session = runtime_controller.start(&selected.manifest, &selected.root)?;
+    let verification_runner = VerificationRunner;
+    verification_runner.verify(&selected.root, &selected.manifest, &mut session)?;
+    session.shutdown(&selected.manifest, &selected.root)?;
+
+    let installed_root = install_provider(workspace_root, capability, &selected.root)?;
+    record_workspace_capability(workspace_root, capability)?;
+
+    Ok(LearnOutcome {
+        capability: capability.to_string(),
+        provider_root: installed_root,
+    })
 }
 
 fn load_registry(options: &LearnOptions) -> Result<RegistryIndex> {
